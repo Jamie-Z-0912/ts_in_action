@@ -64,54 +64,6 @@ let e3: E.a;
 let g1: G;
 let g2: G.a;
 
-/***** *****/
-
-interface List {
-  readonly id: number;
-  name: string;
-  // [x: string]: any; //任意索引，任意类型值
-  age?: number;
-}
-interface Result {
-  data: List[];
-}
-function render(result: Result) {
-  result.data.forEach(value => {
-    console.log(value.id, value.name);
-    if (value.age) {
-      console.log(value.age);
-    }
-    // value.id++
-  });
-}
-
-let result = {
-  data: [
-    { id: 1, name: "AA", sex: "male" },
-    { id: 2, name: "BB", age: 10 }
-  ]
-};
-render(result);
-// render({
-//   data: [
-//     { id: 1, name: "AA", sex: "male" },
-//     { id: 2, name: "BB" }
-//   ]
-// } as Result);
-
-// 可索引接口
-// 用任意数字索引 StringArray 得到 string
-interface StringArray {
-  [index: number]: string;
-}
-let chars: StringArray = ["a", "b"];
-
-interface Names {
-  [x: string]: string;
-  // y: number;
-  [z: number]: string;
-}
-
 module.exports = {
   Role,
   Message,
