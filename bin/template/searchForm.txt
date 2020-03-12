@@ -1,0 +1,81 @@
+<template>
+  <a-form :form="form">
+    <a-row>
+      <a-col span="8">
+        <a-form-item :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol" label="日期">
+          <a-range-picker
+            :defaultValue="[filter.start_time, filter.end_time]"
+            :style="{ width: '256px' }"
+            @change="onDateChange"
+          />
+        </a-form-item>
+      </a-col>
+      <a-col span="8">
+        <a-form-item :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol" label="表单文本示范">
+          <a-input v-decorator="['text', { initialValue: filter.text||'' }]"></a-input>
+        </a-form-item>
+      </a-col>
+      <a-col span="6" style="text-align: right">
+        <a-button-group>
+          <a-button icon="search" type="primary" @click="handleSubmit">查询</a-button>
+        </a-button-group>
+      </a-col>
+    </a-row>
+  </a-form>
+</template>
+
+<script>
+import moment from 'moment';
+
+const formLayout = {
+  labelCol: { span: 6 },
+  wrapperCol: { span: 16 }
+};
+export default {
+  props: {},
+  data() {
+    const { $form } = this;
+    return {
+      formLayout,
+      form: $form.createForm(this)
+    };
+  },
+  computed: {
+    filter() {
+      return this.$store.state.$ModName$.filter;
+    }
+  },
+  methods: {
+    moment,
+    getInitData() {
+      this.$store.dispatch({ type: '$ModName$/getInit' });
+    },
+    onDateChange(dates) {
+      // 改变时间
+      const values =
+        dates.length === 2
+          ? { start_time: dates[0], end_time: dates[1] }
+          : { start_time: moment().subtract(7, 'day'), end_time: moment() };
+      this.$store.commit({
+        type: '$ModName$/changeFilter',
+        payload: values
+      });
+    },
+    handleSubmit() {
+      const { form, $store } = this;
+      form.validateFields((err, values) => {
+        console.log(values);
+        if (!err) {
+          $store.commit({
+            type: '$ModName$/changeFilter',
+            payload: values
+          });
+          this.getInitData();
+        }
+      });
+    }
+  }
+};
+</script>
+
+<style></style>

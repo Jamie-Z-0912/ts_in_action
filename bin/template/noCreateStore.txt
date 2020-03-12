@@ -1,0 +1,63 @@
+import { $ModName$API } from '@/api/$OneLevel$';
+import moment from 'moment';
+
+export default {
+  namespaced: true,
+  state: {
+    filter: {
+      start_time: moment().subtract(7, 'day'),
+      end_time: moment(),
+      page_num: 1,
+      page_size: 10
+    },
+    data: {
+      data_list: [],
+      pagination: {
+        pageSize: 10,
+        curren: 1,
+        pageTotal: 0,
+        total: 0
+      }
+    }
+  },
+  actions: {
+    getInit: async ({ state, commit }) => {
+      const { filter } = state;
+      const { start_time, end_time } = filter;
+      const tempFilter = {
+        ...filter,
+        start_time: moment(start_time.format('YYYY-MM-DD 00:00:00')).valueOf(),
+        end_time: moment(end_time.format('YYYY-MM-DD 23:59:59')).valueOf()
+      };
+      const res = await $ModName$API(tempFilter);
+      if (res.status === 1000) {
+        commit('save', res.data);
+      }
+    }
+  },
+  mutations: {
+    changeFilter: (state, { payload }) => {
+      const temp = payload.page_num ? payload : { ...payload, page_num: 1 };
+      state.filter = {
+        ...state.filter,
+        ...temp
+      };
+    },
+    save: (state, data) => {
+      state.data = {
+        data_list: data.list,
+        pagination: {
+          pageSize: data.page_size,
+          curren: data.page,
+          pageTotal: data.total_page,
+          total: data.total_count,
+          showTotal: total => `共 ${total} 条`,
+          showSizeChanger: true,
+          onShowSizeChange: (current, pageSize) => {
+            state.filter.page_size = pageSize;
+          }
+        }
+      };
+    }
+  }
+};

@@ -1,0 +1,103 @@
+<template>
+  <div>
+    <a-card>
+      <SearchForm></SearchForm>
+    </a-card>
+    <a-button icon="plus" type="primary" @click="showModal()">添加</a-button>
+    <div style="background-color: #fff">
+      <a-table
+        bordered
+        size="middle"
+        :columns="columns"
+        :loading="loading"
+        :rowKey="record => record.id"
+        :dataSource="initData"
+        :pagination="pagination"
+        @change="handleTableChange"
+      >
+        <div slot="timeBox" slot-scope="text, record">
+          <RowItem attrText="创建时间" :val="record.create_time | dayjs"></RowItem>
+          <RowItem attrText="更新时间" :val="record.update_time | dayjs"></RowItem>
+        </div>
+        <!-- 如果 无编辑删除操作，请自行删减 -->
+        <template slot="action" slot-scope="text, record">
+          <a @click="showModal(record)">编辑</a>
+          <a-divider type="vertical" />
+          <a @click="handleRemove(record.id)" style="color: #f00;">删除</a>
+        </template>
+      </a-table>
+    </div>
+    <createForm></createForm>
+  </div>
+</template>
+
+<script>
+import moment from 'moment';
+import RowItem from '@/components/RowItemWL';
+import SearchForm from './searchForm';
+import createForm from './createForm';
+
+const columns = [
+  {
+    title: 'ID',
+    dataIndex: 'id'
+  },
+  {
+    title: '时间',
+    dataIndex: 'create_time',
+    scopedSlots: { customRender: 'timeBox' }
+  },
+  {
+    title: '操作',
+    key: 'action',
+    scopedSlots: { customRender: 'action' }
+  }
+];
+
+export default {
+  components: {
+    createForm,
+    SearchForm,
+    RowItem
+  },
+  data() {
+    return {
+      loading: true,
+      columns
+    };
+  },
+  computed: {
+    initData() {
+      return this.$store.state.$ModName$.data.data_list;
+    },
+    pagination() {
+      return this.$store.state.$ModName$.data.pagination;
+    }
+  },
+  mounted() {
+    this.$store.dispatch({ type: '$ModName$/getInit' }).then(() => (this.loading = false));
+  },
+  methods: {
+    moment,
+    handleTableChange(pagination) {
+      // console.log(pagination);
+      const {
+        $store: { dispatch, commit }
+      } = this;
+      commit({ type: '$ModName$/changeFilter', payload: { page_num: pagination.current } });
+      dispatch({ type: '$ModName$/getInit' });
+    },
+    showModal(record = {}) {
+      this.$store.commit({
+        type: '$ModName$/changeEditView',
+        payload: record
+      });
+    },
+    handleRemove(id) {
+      this.$store.dispatch({ type: '$ModName$/removeFunc', id });
+    }
+  }
+};
+</script>
+
+<style scoped lang="less"></style>

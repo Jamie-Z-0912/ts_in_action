@@ -1,0 +1,128 @@
+import {
+  $ModName$API,
+  $ModName$AddAPI,
+  $ModName$EditAPI,
+  $ModName$DeleteAPI,
+  $ModName$StatusAPI
+} from '@/api/$OneLevel$';
+import moment from 'moment';
+import { message } from 'ant-design-vue/es';
+
+// 每条数据的初始值，新增默认，按需修改
+const initialData = {
+  start_time: moment()
+    .subtract(-1, 'day')
+    .valueOf(),
+  end_time: moment()
+    .subtract(-7, 'day')
+    .valueOf()
+};
+export default {
+  namespaced: true,
+  state: {
+    filter: {
+      start_time: moment().subtract(7, 'day'),
+      end_time: moment(),
+      page_num: 1,
+      page_size: 10
+    },
+    editView: {
+      visible: false,
+      data: initialData
+    },
+    data: {
+      data_list: [],
+      pagination: {
+        pageSize: 10,
+        curren: 1,
+        pageTotal: 0,
+        total: 0
+      }
+    }
+  },
+  actions: {
+    getInit: async ({ state, commit }) => {
+      const { filter } = state;
+      const { start_time, end_time } = filter;
+      const tempFilter = {
+        ...filter,
+        start_time: moment(start_time.format('YYYY-MM-DD 00:00:00')).valueOf(),
+        end_time: moment(end_time.format('YYYY-MM-DD 23:59:59')).valueOf()
+      };
+      const res = await $ModName$API(tempFilter);
+      if (res.status === 1000) {
+        commit('save', res.data);
+      }
+    },
+    editFunc: async ({ state, dispatch, commit }) => {
+      const { data } = state.editView;
+      const res = data.id ? await $ModName$EditAPI(data) : await $ModName$AddAPI(data);
+      if (res.status === 1000) {
+        message.success(data.id ? '修改成功' : '添加成功');
+        commit('changeEditView');
+        dispatch({ type: 'getInit' });
+      }
+    },
+    removeFunc: async ({ dispatch }, { id }) => {
+      const res = await $ModName$DeleteAPI(id);
+      if (res.status === 1000) {
+        message.success('删除成功');
+        dispatch({ type: 'getInit' });
+      } else {
+        message.fail(`失败${res.status}：${res.desc}`);
+      }
+    },
+    changeStatusFunc: async ({ dispatch }, { payload }) => {
+      const res = await $ModName$StatusAPI(payload);
+      if (res.status === 1000) {
+        message.success(payload.status ? '上架成功' : '下架成功');
+        dispatch({ type: 'getInit' });
+      } else {
+        message.fail(`失败${res.status}：${res.desc}`);
+      }
+    }
+  },
+  mutations: {
+    changeFilter: (state, { payload }) => {
+      const temp = payload.page_num ? payload : { ...payload, page_num: 1 };
+      state.filter = {
+        ...state.filter,
+        ...temp
+      };
+    },
+    save: (state, data) => {
+      state.data = {
+        data_list: data.list,
+        pagination: {
+          pageSize: data.page_size,
+          curren: data.page,
+          pageTotal: data.total_page,
+          total: data.total_count,
+          showTotal: total => `共 ${total} 条`,
+          showSizeChanger: true,
+          onShowSizeChange: (current, pageSize) => {
+            state.filter.page_size = pageSize;
+          }
+        }
+      };
+    },
+    changeEditView: (state, params) => {
+      const { payload } = params || {};
+      if (!payload) {
+        state.editView = {
+          visible: false,
+          data: initialData
+        };
+      } else {
+        const temp = state.editView;
+        state.editView = {
+          visible: true,
+          data: {
+            ...temp.data,
+            ...payload
+          }
+        };
+      }
+    }
+  }
+};

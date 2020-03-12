@@ -1,0 +1,78 @@
+<template>
+  <a-modal :title="editData.id ? '编辑' : '添加'" :visible="visible" @cancel="closeModal" @ok="handleSubmit" width="700px">
+    <a-form :form="form">
+      <a-form-item :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol" label="标题">
+        <a-input v-decorator="['title', { initialValue: editData.title }]"></a-input>
+      </a-form-item>
+      <a-form-item :label-col="formLayout.labelCol" :wrapper-col="formLayout.wrapperCol" label="投放时间">
+        <a-range-picker
+          :value="[moment(editData.start_time), moment(editData.end_time)]"
+          :style="{ width: '256px' }"
+          @change="onDateChange"
+        />
+      </a-form-item>
+    </a-form>
+  </a-modal>
+</template>
+
+<script>
+import moment from 'moment';
+
+const formLayout = {
+  labelCol: { span: 6 },
+  wrapperCol: { span: 16 }
+};
+export default {
+  props: {},
+  data() {
+    const { $form } = this; // $attrs
+    return {
+      formLayout,
+      form: $form.createForm(this)
+    };
+  },
+  computed: {
+    visible() {
+      return this.$store.state.$ModName$.editView.visible;
+    },
+    editData() {
+      return this.$store.state.$ModName$.editView.data;
+    }
+  },
+  methods: {
+    moment,
+    closeModal() {
+      this.$store.commit({ type: '$ModName$/changeEditView' });
+      this.form.resetFields();
+    },
+    onDateChange(dates) {
+      // 改变时间
+      if (dates.length === 2) {
+        const values = { start_time: dates[0].valueOf(), end_time: dates[1].valueOf() };
+        this.$store.commit({
+          type: '$ModName$/changeEditView',
+          payload: values
+        });
+      }
+    },
+    handleSubmit() {
+      const { form, $store } = this;
+      form.validateFields((err, values) => {
+        console.log(values);
+        if (!err) {
+          $store.commit({
+            type: '$ModName$/changeEditView',
+            payload: values
+          });
+          $store.dispatch({
+            type: '$ModName$/editFunc'
+          });
+          form.resetFields();
+        }
+      });
+    }
+  }
+};
+</script>
+
+<style></style>
