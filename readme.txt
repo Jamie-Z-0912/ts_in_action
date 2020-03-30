@@ -2,3 +2,4 @@
 一步一步来
 开始了
 distributed
+Git is free software distributed under the GPL.
